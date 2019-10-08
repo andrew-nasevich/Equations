@@ -25,7 +25,7 @@ buff rb 101
 buff2 rb 10
 x rb (1 +4*10)
 mod_x rb (1 +4*10)
-tFloat  dt -502556.267e600  ; Вещественное число
+tFloat  dt -502556.267e600 
 szFloat rb 100
 sctct rb 4 ; sin-cos-tg-ctg
 ;a dd ?
