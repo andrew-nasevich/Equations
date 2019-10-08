@@ -1,5 +1,5 @@
-; Âîîçâðàùàåò 1 â eax â ñëó÷àå îøèáêè
-proc CheckingEquationStr uses edi esi ebx, strSrc, xSrc; aSrc, bSrc, cSrc,  ; src - source(èñòî÷íèê)
+; Ð’Ð¾Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ 1 Ð² eax Ð² ÑÐ»ÑƒÑ‡Ð°Ðµ Ð¾ÑˆÐ¸Ð±ÐºÐ¸
+proc CheckingEquationStr uses edi esi ebx, strSrc, xSrc; aSrc, bSrc, cSrc,  ; src - source(Ð¸ÑÑ‚Ð¾Ñ‡Ð½Ð¸Ðº)
 locals
         sign db 0; 0 - (>= 0), 1 - (<= 0)
         factor dd 0;
