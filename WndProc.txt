@@ -1,0 +1,279 @@
+proc WndProc uses ebx edi esi ecx, hwnd, wmsg, wparam, lparam
+
+locals
+        reserved dd ?
+        startpixel db ?
+        firstPixel db ?
+
+endl
+
+        cmp [wmsg], WM_DESTROY
+        je .wmdestroy
+
+        cmp [wmsg], WM_COMMAND
+        je .wmcommand
+
+        cmp [wmsg], WM_CREATE
+        je .wmcreate
+
+        cmp [wmsg], WM_PAINT
+        je .wmpaint
+        invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
+        jmp .finish
+.wmpaint:
+        invoke BeginPaint, [hwnd], ps
+        mov [hdc], eax
+
+        invoke CreateSolidBrush, $ffffff
+
+        invoke FillRect, [hdc], r, eax
+        invoke DeleteObject, eax
+
+        stdcall InitializeScreen, [hwnd]
+@@:
+        cmp [button2_pressed], 0
+        je .endProcessing
+
+        invoke SendMessage, [hedit4], WM_GETTEXT, 10, buff2
+        stdcall TransformText, buff2, Xprice
+        test eax, eax
+        jnz .errorX
+
+        invoke SendMessage, [hedit5], WM_GETTEXT, 10, buff2
+        stdcall TransformText, buff2, Yprice
+        test eax, eax
+        jnz .errorY
+
+        invoke CreatePen, PS_SOLID, 2, $0000aa
+        mov [hLinePen], eax
+        invoke SelectObject, [hdc], [hLinePen]
+        mov [hOldPen], eax
+
+        cmp [x], 1
+        jne @F
+        cmp [mod_x], 0
+        jne @F
+
+        jmp .YisLine
+
+@@:
+        mov [startpixel], 0
+        mov [firstPixel], 1
+        mov esi, 0
+        fild [Xprice]
+        mov [reserved], 251
+        fimul [reserved]
+        mov [reserved], 20
+        fidiv [reserved]
+        fchs
+
+
+.Cycle:
+        fild [Xprice]
+        fidiv [reserved]
+        faddp st1, st0
+        fld st0
+
+        stdcall CountY, x, [Yprice]
+
+        mov edx, CENTRALY
+        sub edx, eax
+
+        mov eax, MINCOORDX
+        add eax, esi
+
+        cmp [firstPixel], 1
+        jne @F
+        push eax edx
+        invoke MoveToEx, [hdc], eax, edx, 0
+        pop edx eax
+        mov [firstPixel], 0
+
+
+@@:
+        cmp edx, MAXCOORDY
+        jge .bigger
+        cmp edx, MINCOORDY
+        jle .lower
+
+        invoke LineTo, [hdc], eax, edx
+        mov [startpixel], 1
+        jmp @F
+.lower:
+        cmp [startpixel], 1
+        jne .lower.first
+
+        push eax
+        invoke LineTo, [hdc], eax, MINCOORDY - 1
+        pop eax
+
+        mov [startpixel], 0
+        jmp @F
+.lower.first:
+        invoke MoveToEx, [hdc], eax, MINCOORDY - 1, 0
+        jmp @F
+.bigger:
+        cmp [startpixel], 1
+        jne .bigger.first
+
+        push eax
+        invoke LineTo, [hdc], eax, MAXCOORDY - 1
+        pop eax
+        mov [startpixel], 0
+        jmp @F
+
+.bigger.first:
+        invoke MoveToEx, [hdc], eax, MAXCOORDY - 1, 0
+
+
+
+@@:
+        inc esi
+        cmp esi, 505
+        jbe .Cycle
+        fstp st0
+        jmp .endDrawing
+.YisLine:
+
+        mov [reserved], 20
+        fild dword[x + 1 + 4 * 0]
+        fidiv [Yprice]
+        fimul [reserved]
+        fistp [reserved]
+        mov ebx, CENTRALY
+        sub ebx, [reserved]
+        cmp ebx, MINCOORDY
+        jl .endDrawing
+        cmp ebx, MAXCOORDY
+        jg .endDrawing
+        invoke MoveToEx, [hdc], MINCOORDX, ebx, 0
+        invoke LineTo, [hdc], MAXCOORDX, ebx
+
+.endDrawing:
+        invoke DeleteObject,[hLinePen]
+        invoke SelectObject, hdc, hOldPen
+        jmp .finish
+.errorX:
+        invoke MessageBox, [hwnd], errorCoordX, 0, MB_OK
+        jmp .endProcessing
+.errorY:
+        invoke MessageBox, [hwnd], errorCoordY, 0, MB_OK
+        jmp .endProcessing
+.endProcessing:
+        invoke EndPaint, [hwnd], ps
+
+        jmp .finish
+
+
+.wmcommand:
+        cmp [wparam], BTN1
+        je .BTN1
+
+        cmp [wparam], BTN2
+        je .BTN2
+
+        jmp .finish
+
+.BTN2:
+        mov dword[sctct], 0
+
+        mov ecx, 40
+@@:
+        mov [x + ecx], 0
+        loop @B
+        mov [x], 0
+
+        mov ecx, 40
+@@:
+        mov [mod_x + ecx], 0
+        loop @B
+        mov [mod_x], 0
+
+        invoke SendMessage, [hedit1], WM_GETTEXT, 100, buff
+        stdcall DelSpaces, buff
+        stdcall CheckingEquationStr, buff, x
+        test eax, eax
+        jnz .error
+        cmp [x], 0
+        jnz @f
+        cmp dword[sctct], 0
+        jnz @F
+        cmp [mod_x], 0
+        jnz @f
+       ; cmp [buff], 0   ; можно строить график, если пользованитель ввел y = 0, но нельзя при y = . Хотя результаты [c] = 0 в обоих случаях
+       ; jnz .withoutCounting
+.Senseless:
+        invoke MessageBox, [hwnd], SenselessEquation ,0, MB_OK
+        jmp .finish
+@@:
+        ;stdcall CountX, dword[x +1+ 4*2], dword[x +1+ 4*1], dword[x +1+ 4*0]
+;.withoutCounting:
+        mov [button2_pressed], 1
+        invoke RedrawWindow, [hwnd] , 0, 0, RDW_INVALIDATE
+        jmp .finish
+
+.BTN1:
+        mov ecx, 40
+@@:
+        mov [x + ecx], 0
+        loop @B
+        mov [x], 0
+
+        invoke SendMessage, [hedit1], WM_GETTEXT, 100, buff
+        stdcall DelSpaces, buff
+        stdcall CheckingEquationStr, buff, x
+        test eax, eax
+        jnz .error
+        cmp [x], 3
+        ja .toobig
+        cmp [x], 1
+        ja @f
+        invoke MessageBox, [hwnd], SenselessEquation ,0, MB_OK
+        jmp .finish
+@@:
+        stdcall CountX, dword[x + 1 + 4 * 2], dword[x +1 + 4 * 1], dword[x + 1 + 4 * 0]
+        jmp @F
+.toobig:
+        invoke MessageBox, [hwnd], errorTooBig, errorCaption, MB_OK
+@@:
+        jmp .finish
+.wmdestroy:
+        invoke PostQuitMessage, 0
+        xor eax, eax
+        jmp .finish
+
+.wmcreate:
+        mov [r.left], MINCOORDX - 1
+        mov [r.top], MINCOORDY - 1
+        mov [r.right], MAXCOORDX + 1
+        mov [r.bottom], MAXCOORDY + 1
+
+        invoke CreateWindowEx, 0, classBtn, titleBtn1, WS_VISIBLE or WS_CHILD, 10, 80, 200, 40, [hwnd], BTN1, [wc.hInstance], 0
+        mov [hbtn1], eax
+        invoke CreateWindowEx, 0, classBtn, titleBtn2, WS_VISIBLE or WS_CHILD, 10, 250, 200, 40, [hwnd], BTN2, [wc.hInstance], 0
+        mov [hbtn2], eax
+
+        invoke CreateWindowEx, 0, classStatic, TextStaticAll, WS_VISIBLE or WS_CHILD, 10, 20, 200, 20, [hwnd], 0, [wc.hInstance], 0
+        invoke CreateWindowEx, 0, classEdit, 0, WS_VISIBLE or WS_CHILD or WS_BORDER, 10, 40, 200, 20, [hwnd], EDIT1, [wc.hInstance], 0
+        mov [hedit1], eax
+        invoke CreateWindowEx, 0, classStatic, TextStaticX1, WS_VISIBLE or WS_CHILD, 10, 140, 200, 20, [hwnd], 0, [wc.hInstance], 0
+        invoke CreateWindowEx, 0, classEdit, 0, WS_VISIBLE or WS_CHILD or WS_BORDER, 10, 160, 200, 20, [hwnd], EDIT2, [wc.hInstance], 0
+        mov [hedit2], eax
+        invoke CreateWindowEx, 0, classStatic, TextStaticX2, WS_VISIBLE or WS_CHILD, 10, 190, 200, 20, [hwnd], 0, [wc.hInstance], 0
+        invoke CreateWindowEx, 0, classEdit, 0, WS_VISIBLE or WS_CHILD or WS_BORDER, 10, 210, 200, 20, [hwnd], EDIT3, [wc.hInstance], 0
+        mov [hedit3], eax
+
+        invoke CreateWindowEx, 0, classStatic, TextStaticCordX, WS_VISIBLE or WS_CHILD, 10, 310, 200, 20, [hwnd], 0, [wc.hInstance], 0
+        invoke CreateWindowEx, 0, classEdit, 0, WS_VISIBLE or WS_CHILD or WS_BORDER, 10, 330, 200, 20, [hwnd], EDIT2, [wc.hInstance], 0
+        mov [hedit4], eax
+        invoke CreateWindowEx, 0, classStatic, TextStaticCordY, WS_VISIBLE or WS_CHILD, 10, 360, 200, 20, [hwnd], 0, [wc.hInstance], 0
+        invoke CreateWindowEx, 0, classEdit, 0, WS_VISIBLE or WS_CHILD or WS_BORDER, 10, 380, 200, 20, [hwnd], EDIT3, [wc.hInstance], 0
+        mov [hedit5], eax
+
+        jmp .finish
+.error:
+        invoke MessageBox, [hwnd], errorIncorrectEquation, errorCaption, MB_OK + MB_ICONERROR
+.finish:
+.end:
+        ret
+endp

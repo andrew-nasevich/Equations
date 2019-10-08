@@ -1,0 +1,40 @@
+BTN1        equ 001
+BTN2        equ 002
+EDIT1       equ 101
+EDIT2       equ 102
+EDIT3       equ 103
+
+CELLSX      equ 12
+CELLSY      equ 10
+PIXELSX     equ 240
+PIXELSY     equ 200
+MINCOORDX   equ 250
+MAXCOORDX   equ 755
+MINCOORDY   equ 25
+MAXCOORDY   equ 450
+CENTRALX    equ 500
+CENTRALY    equ 240
+
+classWnd db 'FASMWIN32',0
+classBtn db 'BUTTON',0
+classEdit db 'EDIT', 0
+classStatic db 'STATIC',0
+
+titleBtn1 db 'Найти точки на оси Ох',0
+titleBtn2 db 'Построить график',0
+
+errorCaption db 'Ошибка',0
+errorCaption1 db 'Ошибка. Некорректнное уравнение',0
+errorIncorrectEquation db 'Некорректное уравнение',0
+errorCoordX db 'Некорректное значение цены деления по оси X', 0
+errorCoordY db 'Некорректное значение цены деления по оси Y', 0
+errorTooBig db 'Слишком большая степень',0
+
+nameWnd db 'Программное средство для решения математческих уравнений',0
+TextStaticAll db 'Ваше уравнение Y = ', 0
+ErrorD db 'Дискриминант меньше нуля',0
+SenselessEquation db 'Уравнение бессмысленно',0
+TextStaticX1 db 'x1 = ',0
+TextStaticX2 db 'x2 = ',0
+TextStaticCordX db 'Цена деления на оси X',0
+TextStaticCordY db 'Цена деления на оси Y',0

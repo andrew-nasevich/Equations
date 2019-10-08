@@ -1,0 +1,352 @@
+; Воозвращает 1 в eax в случае ошибки
+proc CheckingEquationStr uses edi esi ebx, strSrc, xSrc; aSrc, bSrc, cSrc,  ; src - source(источник)
+locals
+        sign db 0; 0 - (>= 0), 1 - (<= 0)
+        factor dd 0;
+        error db 0
+endl
+        ;mov ebx, [aSrc]
+        ;mov dword[ebx], 0
+        ;mov ebx, [bSrc]
+        ;mov dword[ebx], 0
+        ;mov ebx, [cSrc]
+        ;mov dword[ebx], 0
+        mov ebx, [xSrc]
+        mov byte[ebx], 0
+        mov ebx, [strSrc]
+        xor edi, edi
+.Cycle:
+;define_sign
+        cmp byte[ebx + edi], 0
+        je .Cycle.finish
+        cmp byte[ebx + edi], '+'
+        je .sign.plus
+        cmp byte[ebx + edi], '-'
+        je .sign.minus
+        mov [sign], 0
+        jmp .sign.end
+.sign.plus:
+        inc edi
+        mov [sign], 0
+        jmp .sign.end
+.sign.minus:
+        inc edi
+        mov [sign], 1
+.sign.end:
+;define_sign
+;define_factor
+        mov [factor], 0
+.Cycle.factor:
+        cmp byte[ebx + edi], 0
+        je .Cycle.finish
+        cmp byte[ebx + edi], '0'
+        jb .define_factor
+        cmp byte[ebx + edi], '9'
+        ja .define_factor
+
+        mov eax, [factor]
+        imul eax, 10
+        mov [factor], eax
+        xor edx, edx
+        mov dl, byte[ebx + edi]
+        sub dl, '0'
+        add [factor], edx
+        inc edi
+
+        jmp .Cycle.factor
+.define_factor:
+
+        cmp byte[ebx + edi], 'x'
+        je .define_factor.x
+        cmp byte[ebx + edi], 'X'
+        je .define_factor.x
+        cmp byte[ebx + edi], '*'
+        je .difine_factor.x.inc_edi
+        cmp byte[ebx + edi], '+'
+        je .difine_factor.x.exp.0
+        cmp byte[ebx + edi], '-'
+        je .difine_factor.x.exp.0
+        cmp byte[ebx + edi], 's'
+        je .difine_factor.sin
+        cmp byte[ebx + edi], 'c'
+        je .difine_factor.cos
+        cmp byte[ebx + edi], 't'
+        je .difine_factor.tg
+        cmp byte[ebx + edi], 'S'
+        je .difine_factor.sin
+        cmp byte[ebx + edi], 'C'
+        je .difine_factor.cos
+        cmp byte[ebx + edi], 'T'
+        je .difine_factor.tg
+        cmp byte[ebx + edi], '|'
+        je .difine_factor.mod_x
+        jmp .error
+
+.difine_factor.mod_x:
+
+        inc edi
+        cmp byte[ebx + edi], 0
+        je .error
+        cmp byte[ebx + edi], 'x'
+        je @F
+        cmp byte[ebx + edi], 'X'
+        je @F
+        jmp .error
+
+@@:     inc edi
+        cmp byte[ebx + edi], 0
+        je .error
+        cmp byte[ebx + edi], '|'
+        je .difine_factor.mod_x.one
+        cmp byte[ebx + edi], '^'
+        je @F
+        jne .error
+@@:
+        xor eax, eax
+
+        inc edi
+        cmp byte[ebx + edi], 0
+        je .error
+        cmp byte[ebx + edi], '0'
+        jb .error
+        cmp byte[ebx + edi], '9'
+        ja .error
+        mov al, [ebx + edi]
+        sub al, '0'
+
+        push ebx
+        lea ebx, [mod_x + 1 + eax * 4]
+        inc dword[ebx]
+        cmp [mod_x], al
+        ja @F
+        mov [mod_x], al
+        inc [mod_x]
+
+@@:
+        inc edi
+        pop ebx
+        cmp byte[ebx + edi], 0
+        je .error
+        cmp byte[ebx + edi], '|'
+        jne .error
+        inc edi
+        jmp .Cycle
+
+.difine_factor.mod_x.one:
+
+        inc dword[mod_x + 1 + 4 * 1]
+        cmp byte[mod_x], 0
+        ja @F
+        mov byte[mod_x], 2
+        inc edi
+
+@@:
+        jmp .Cycle
+
+
+.difine_factor.sin:
+        inc byte[sctct]
+        add edi, 4
+        jmp .Cycle
+
+.difine_factor.cos:
+        cmp byte[ebx + edi + 1], 't'
+        je .difine_factor.ctg
+        cmp byte[ebx + edi + 1], 'T'
+        je .difine_factor.ctg
+        inc byte[sctct + 1]
+        add edi, 4
+        jmp .Cycle
+
+.difine_factor.tg:
+        inc byte[sctct + 2]
+        add edi, 3
+        jmp .Cycle
+
+.difine_factor.ctg:
+        inc byte[sctct + 3]
+        add edi, 4
+        jmp .Cycle
+
+
+.difine_factor.x.inc_edi:
+        inc edi
+.define_factor.x:
+        cmp byte[ebx + edi], 'x'
+        je @F
+        cmp byte[ebx + edi], 'X'
+        je @F
+        jmp .error
+@@:
+        inc edi
+        cmp byte[ebx + edi], 0
+        je .define_factor.x.exp.1
+        cmp byte[ebx + edi], '^'
+        jne .define_factor.x.exp.1
+        inc edi
+        cmp byte[ebx + edi], 0
+        je .error
+        jmp .define_factor.x.exp
+       ; cmp byte[ebx + edi], '1'
+       ; je .define_factor.x1.plusEdi
+       ; cmp byte[ebx + edi], '2'
+       ; je .define_factor.x2
+       ; jmp .error
+
+.difine_factor.x.exp.0:
+
+        mov dl, 1
+        mov esi, [xSrc]
+        cmp dl, byte[esi]
+        jbe  @F
+        mov byte[esi], dl
+@@:
+
+        mov al, [sign]
+        test al, al
+        jnz .define_factor.x.exp.0.minus
+
+        mov eax, [factor]
+        push ebx
+        mov ebx, [xSrc]
+        lea ebx, [ebx + 1 + 4 * 0]
+        add dword[ebx], eax
+        pop ebx
+        mov [factor], 0
+        jmp .Cycle
+
+.define_factor.x.exp.0.minus:
+        mov eax, [factor]
+        push ebx
+        mov ebx, [xSrc]
+        lea ebx, [ebx + 1 + 4 *0]
+        sub [ebx], eax
+        pop ebx
+        mov [factor], 0
+        jmp .Cycle
+
+.define_factor.x.exp.1.plusEdi:
+        inc edi
+.define_factor.x.exp.1:
+
+        mov dl, 2
+        mov esi, [xSrc]
+        cmp dl, byte[esi]
+        jbe  @F
+        mov byte[esi], dl
+@@:
+
+        mov al, [sign]
+        test al, al
+        jnz .define_factor.x.exp.1.minus
+
+        cmp [factor], 0
+        jne @f
+        mov [factor], 1
+@@:
+        mov eax, [factor]
+        push ebx
+        mov ebx, [xSrc]
+        lea ebx, [ebx + 1 + 4 *1]
+        add dword[ebx], eax
+        pop ebx
+        mov [factor], 0
+        jmp .Cycle
+.define_factor.x.exp.1.minus:
+        cmp [factor], 0
+        jne @f
+        mov [factor], 1
+@@:
+        mov eax, [factor]
+        push ebx
+        mov ebx, [xSrc]
+        lea ebx, [ebx + 1 + 4 *1]
+        sub [ebx], eax
+        pop ebx
+        mov [factor], 0
+        jmp .Cycle
+
+.define_factor.x.exp:
+
+        xor edx, edx
+        mov dl, [ebx + edi]
+        sub dl, '0'
+
+        inc dl
+        mov esi, [xSrc]
+        cmp dl, byte[esi]
+        jbe  @F
+        mov byte[esi], dl
+@@:
+        dec dl
+        inc edi
+
+        cmp [factor], 0
+        jne @f
+        mov [factor], 1
+@@:
+        mov al, [sign]
+        test al, al
+        jnz .define_factor.x.exp.minus
+
+        mov eax, [factor]
+        push ebx
+        mov ebx, [xSrc]
+        lea ebx, [ebx + 1 + 4 * edx]
+        add [ebx], eax
+        pop ebx
+        mov [factor], 0
+        jmp .Cycle
+
+.define_factor.x.exp.minus:
+        mov eax, [factor]
+        push ebx
+        mov ebx, [xSrc]
+        lea ebx, [ebx + 1 + 4 * edx]
+        sub [ebx], eax
+        pop ebx
+        mov [factor], 0
+        jmp .Cycle
+;define_factor
+;error
+
+.error:
+        mov [error], 1
+        jmp .finish.end
+;error
+.Cycle.finish:
+
+        cmp [factor], 0
+        je .finish.end
+
+        mov dl, 1
+        mov esi, [xSrc]
+        cmp dl, byte[esi]
+        jbe  @F
+        mov byte[esi], dl
+@@:
+
+        mov al, [sign]
+        test al, al
+        jnz .finish.x0.minus
+        mov eax, [factor]
+        push ebx
+        mov ebx, [xSrc]
+        lea ebx, [ebx + 1 + 4 * 0]
+        add dword[ebx], eax
+        pop ebx
+        jmp .finish.end
+.finish.x0.minus:
+
+        mov eax, [factor]
+        push ebx
+        mov ebx, [xSrc]
+        lea ebx, [ebx + 1 + 4 * 0]
+        sub [ebx], eax
+        pop ebx
+
+.finish.end:
+        xor eax, eax
+        mov al, [error]
+        ret
+endp

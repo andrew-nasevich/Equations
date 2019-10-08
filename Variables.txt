@@ -1,0 +1,36 @@
+wc WNDCLASS 0, WndProc, 0, 0, 0, 0, 0, COLOR_BTNFACE + 1, 0, classWnd
+msg MSG
+
+ps PAINTSTRUCT ?
+r RECT ?
+hPen dd ?
+hLinePen dd ?
+hOldPen dd ?
+hdc dd ?
+
+hwnd dd ?
+hbtn1 dd ?
+hbtn2 dd ?
+hedit1 dd ?
+hedit2 dd ?
+hedit3 dd ?
+hedit4 dd ?
+hedit5 dd ?
+
+rc RECT
+
+button2_pressed db 0
+
+buff rb 101
+buff2 rb 10
+x rb (1 +4*10)
+mod_x rb (1 +4*10)
+tFloat  dt -502556.267e600  ; Вещественное число
+szFloat rb 100
+sctct rb 4 ; sin-cos-tg-ctg
+;a dd ?
+;b dd ?
+;c dd ?
+
+Xprice dd ?
+Yprice dd ?
