@@ -1,4 +1,4 @@
-        format PE GUI 4.0      ; todo добавить обработку y
+        format PE GUI 4.0   
 include 'win32a.inc'
 
 entry Main
@@ -64,8 +64,8 @@ endl
         fsubp st1, st0
         fldz
         fcomp st1
-        fstsw ax; регистр rs в Ax
-        sahf ; ah в флаги
+        fstsw ax; СЂРµРіРёСЃС‚СЂ rs РІ Ax
+        sahf ; ah РІ С„Р»Р°РіРё
         jbe @f
         fstp st0
         invoke MessageBox, [hwnd], ErrorD, 0, MB_OK
@@ -83,7 +83,7 @@ endl
 
         fdivp st1, st0
         ftst
-        fstsw ax; регистр rs в Ax
+        fstsw ax; СЂРµРіРёСЃС‚СЂ rs РІ Ax
         sahf
         jne @f
         fabs
@@ -101,7 +101,7 @@ endl
         fdivp st1, st0
 
         ftst
-        fstsw ax; регистр rs в Ax
+        fstsw ax; СЂРµРіРёСЃС‚СЂ rs РІ Ax
         sahf
         jne @f
         fabs
@@ -117,7 +117,7 @@ endl
         fchs
         fidiv [b]
         ftst
-        fstsw ax; регистр rs в Ax
+        fstsw ax; СЂРµРіРёСЃС‚СЂ rs РІ Ax
         sahf
         jne @f
         fabs
@@ -133,7 +133,7 @@ endp
 
 include 'CheckingEquationStr.txt'
 
-; процедура удаления пробелов
+; РїСЂРѕС†РµРґСѓСЂР° СѓРґР°Р»РµРЅРёСЏ РїСЂРѕР±РµР»РѕРІ
 proc DelSpaces uses edi esi ebx, strSrc
         xor edi, edi
         xor esi, esi
@@ -245,8 +245,8 @@ endl
         ret
 endp
 
-; в стеке fpu должен хранить доп параметр - x/20*i
-; возвращается в eax y в точках
+; РІ СЃС‚РµРєРµ fpu РґРѕР»Р¶РµРЅ С…СЂР°РЅРёС‚СЊ РґРѕРї РїР°СЂР°РјРµС‚СЂ - x/20*i
+; РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ РІ eax y РІ С‚РѕС‡РєР°С…
 proc    CountY uses ebx esi ecx, xSrc, Yprice
 locals
         reserved dd ?
@@ -259,7 +259,7 @@ endl
         fldz
         cmp cl, 0
         je .functions
-; st1 - x/20*i, st0 - текущий y
+; st1 - x/20*i, st0 - С‚РµРєСѓС‰РёР№ y
 .cycle:
         fld1
         xor edx, edx
